@@ -1,34 +1,39 @@
 import React, { useRef, useState } from 'react'
 import { useChatStore } from "../store/useChatStore";
+import { useAuthStore } from '../store/useAuthStore';
 import { Image, Send, X } from 'lucide-react'
 import toast from 'react-hot-toast';
 
 function MessageInput() {
-    const [text, setText] = useState("");
-    const [imagePreview, setImagePreview] = useState(null);
-    const fileInputRef = useRef(null);
-    const { sendMessage } = useChatStore();
+  const [text, setText] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0]
-        if(!file.type.startsWith("image/")){
-            toast.error("Please select an image file")
-            return;            
-        }
-        const reader = new FileReader();
-        reader.onloadend =()=>{
-            setImagePreview(reader.result)
-        }
-        reader.readAsDataURL(file)
+  const { sendMessage } = useChatStore();
+  const socket = useAuthStore.getState().socket
+  const { selectedUser } = useChatStore.getState()
+
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file")
+      return;
     }
-
-    const removeImage = () => {
-        setImagePreview(null)
-        if (fileInputRef.current) fileInputRef.current.value = "";
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result)
     }
+    reader.readAsDataURL(file)
+  }
 
-    const handleSendMessage = async(e)=> {
-        e.preventDefault();
+  const removeImage = () => {
+    setImagePreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
     if (!text.trim() && !imagePreview) return;
 
     try {
@@ -44,11 +49,27 @@ function MessageInput() {
     } catch (error) {
       console.error("Failed to send message:", error);
     }
-    }
+  }
+
+  let typingTimeout
+
+  const handleTyping = () => {
+    const socket = useAuthStore.getState().socket
+
+    socket.emit("typing", { receiverId: selectedUser._id })
+
+    clearTimeout(typingTimeout)
+
+    typingTimeout = setTimeout(() => {
+      console.log('setTimeout working@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
+      
+      socket.emit("stoppedTyping", { receiverId: selectedUser._id })
+    }, 1500)
+  }
 
   return (
     <div className='p-4 w-full bottom-0'>
-        {imagePreview && (
+      {imagePreview && (
         <div className="mb-3 flex items-center gap-2">
           <div className="relative">
             <img
@@ -67,14 +88,17 @@ function MessageInput() {
           </div>
         </div>
       )}
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-            <div className="flex-1 flex gap-2">
-            <input
+      <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+        <div className="flex-1 flex gap-2">
+          <input
             type="text"
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
             placeholder="Type a message..."
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              handleTyping()
+              setText(e.target.value)
+            }}
           />
           <input
             type="file"
@@ -91,15 +115,15 @@ function MessageInput() {
           >
             <Image size={20} />
           </button>
-            </div>
-            <button
+        </div>
+        <button
           type="submit"
           className="btn btn-sm btn-circle"
           disabled={!text.trim() && !imagePreview}
         >
           <Send size={22} />
         </button>
-        </form>
+      </form>
 
     </div>
   )
