@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 function MessageInput() {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const fileInputRef = useRef(null);
 
   const { sendMessage } = useChatStore();
@@ -16,6 +17,10 @@ function MessageInput() {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
+    if(!file) return
+
+    setImageFile(file)
+
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file")
       return;
@@ -39,12 +44,13 @@ function MessageInput() {
     try {
       await sendMessage({
         text: text.trim(),
-        image: imagePreview,
+        imageFile: imageFile,
       });
 
       // Clear form
       setText("");
       setImagePreview(null);
+      setImageFile(null)
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Failed to send message:", error);
