@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 
 const ChatHeader = () => {
-  const { selectedUser, setSelectedUser } = useChatStore();
+  const { selectedUser, setSelectedUser, isTyping } = useChatStore();
   const { onlineUsers } = useAuthStore();
 
   return (
@@ -25,11 +25,19 @@ const ChatHeader = () => {
             </p>
           </div>
         </div>
-
-        {/* Close button */}
-        <button onClick={() => setSelectedUser(null)}>
-          <X />
-        </button>
+        <div className="flex gap-5">
+          {/* typing status */}
+          {isTyping && (
+            <p className="flex items-center gap-1 text-sm text-gray-400 animate-pulse">
+              <span>Typing</span>
+              <span className="loading loading-dots"></span>
+            </p>
+          )}
+          {/* Close button */}
+          <button onClick={() => setSelectedUser(null)}>
+            <X />
+          </button>
+        </div>
       </div>
     </div>
   );
