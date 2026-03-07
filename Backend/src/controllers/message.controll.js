@@ -2,7 +2,7 @@ import cloudinary from '../lib/cloudinary.js'
 
 import User from '../models/user.model.js'
 import Message from '../models/message.model.js'
-import { getReceiverSocketId, io } from '../lib/socket.io.js'
+import { getReceiverSocketIds, io } from '../lib/socket.io.js'
 
 
 const getUsersSidbar =async(req,res)=>{
@@ -54,9 +54,13 @@ const sendMessage=async(req,res)=>{
         await newMessage.save()
     
         //apply socket.io here
-        const recieverSocketId = getReceiverSocketId(recieverId);
-        if(recieverSocketId){
-            io.to(recieverSocketId).emit("newMessage",newMessage)
+        console.log('new message = ',newMessage)
+        const receiverSocketIds = getReceiverSocketIds(recieverId);
+        console.log('recieverSocketId ==== ',receiverSocketIds)
+        if(receiverSocketIds){
+            receiverSocketIds.forEach((socketId) => {
+                io.to(socketId).emit("newMessage", newMessage);
+            });
         }
         
         res.status(200).json(newMessage)

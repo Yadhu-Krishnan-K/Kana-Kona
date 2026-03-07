@@ -38,7 +38,8 @@ export const useChatStore = create((set,get)=>({
     sendMessage:async(messageData)=>{
         const {selectedUser, messages} = get()
         try {
-        const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`,messageData)
+            console.log('sending message...')
+            const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`,messageData)
             set({messages:[...messages,res.data]})
         } catch (error) {
             toast.error(error.response.data.message)
@@ -51,9 +52,15 @@ export const useChatStore = create((set,get)=>({
 
         const socket = useAuthStore.getState().socket
         socket.on("newMessage",(newMessage)=>{
-            if(newMessage.senderId!==selectedUser._id) return;
-            set({messages:[...get().messages,newMessage]})
-        })
+            if(newMessage.senderId!==selectedUser._id) {
+                console.log('11!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+                return
+            };
+            // set({messages:[...get().messages,newMessage]})
+            set(state => ({
+                messages: [...state.messages, newMessage]
+            }))
+        })  
         // socket.on("typing",(val)=>{
         //     if(val)set
         // })
