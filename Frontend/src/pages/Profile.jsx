@@ -10,6 +10,7 @@ const Profile = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+
     const reader = new FileReader();
 
     reader.readAsDataURL(file);
@@ -17,7 +18,7 @@ const Profile = () => {
     reader.onload = async () => {
       const base64Image = reader.result;
       setSelectedImg(base64Image);
-      await updateProfile({ profilePic: base64Image });
+      await updateProfile({ profilePic: file });
     };
   };
 
