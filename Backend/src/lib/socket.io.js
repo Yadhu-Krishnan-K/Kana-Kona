@@ -6,8 +6,12 @@ const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
+  pingInterval: 25000,
+  pingTimeout: 60000,
   cors: {
-    origin: ["http://localhost:5173"],
+    origin: process.env.NODE_ENV === "production" ? process.env.FRONTEND_URL : "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -26,7 +30,7 @@ export const getReceiverSocketIds = (userId) => {
 };
 
 io.on("connection", (socket) => {
-    const userId = socket.handshake.query.userId;
+    const userId = socket.handshake.auth.userId;
     console.log('a user connected = ',userId)
 
   if (userId) {

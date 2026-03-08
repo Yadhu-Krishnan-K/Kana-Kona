@@ -3,7 +3,7 @@ import { axiosInstance } from '../lib/axios'
 import toast from 'react-hot-toast'
 import { io } from "socket.io-client";
 
-const BASE_URL = import.meta.env.MODE === 'development' ? "http://localhost:5001" : "/"
+const BASE_URL = import.meta.env.VITE_BACKEND_URL
 
 export const useAuthStore = create((set, get) => ({
     authUser: null,
@@ -73,9 +73,7 @@ export const useAuthStore = create((set, get) => ({
     updateProfile: async (data) => {
         try {
             const formData = new FormData()
-            console.log('data ==========',data)
             formData.append("image",data.profilePic)
-            console.log('updating profile pic')
             set({ isUpdatingProfile: true })
             const res = await axiosInstance.patch('/auth/update-profile', 
                 formData,
@@ -97,7 +95,7 @@ export const useAuthStore = create((set, get) => ({
             const { authUser } = get()
             if (!authUser || get().socket?.connected) return
             const socket = io(BASE_URL, {
-                query: {
+                auth: {
                     userId: authUser._id
                 }
             });
@@ -107,7 +105,6 @@ export const useAuthStore = create((set, get) => ({
 
             socket.on("getOnlineUsers", (userIds) => {
                 set({ onlineUsers: userIds })
-                console.log(get().onlineUsers)
             })
         } catch (error) {
             console.log('error: socketconnection error: ',error)

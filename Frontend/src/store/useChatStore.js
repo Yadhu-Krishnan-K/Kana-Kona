@@ -44,7 +44,6 @@ export const useChatStore = create((set, get) => ({
             if(messageData.imageFile){
                 formData.append("image",messageData.imageFile)
             }
-            console.log('sending message...')
             const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, 
                 formData,
                 {headers:{

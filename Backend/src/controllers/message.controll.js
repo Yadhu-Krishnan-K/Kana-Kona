@@ -51,7 +51,6 @@ const sendMessage = async (req, res) => {
                     .end(req.file.buffer);
             });
 
-            console.log('result after upload ============== ',result)
 
             imageUrl = result;
         }
@@ -66,9 +65,7 @@ const sendMessage = async (req, res) => {
             await newMessage.save()
 
             //apply socket.io here
-            console.log('new message = ', newMessage)
             const receiverSocketIds = getReceiverSocketIds(recieverId);
-            console.log('recieverSocketId ==== ', receiverSocketIds)
             if (receiverSocketIds) {
                 receiverSocketIds.forEach((socketId) => {
                     io.to(socketId).emit("newMessage", newMessage);

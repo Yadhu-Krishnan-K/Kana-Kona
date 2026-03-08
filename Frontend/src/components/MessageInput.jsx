@@ -67,7 +67,6 @@ function MessageInput() {
     clearTimeout(typingTimeout)
 
     typingTimeout = setTimeout(() => {
-      console.log('setTimeout working@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
       
       socket.emit("stoppedTyping", { receiverId: selectedUser._id })
     }, 1500)

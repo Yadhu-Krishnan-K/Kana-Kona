@@ -7,7 +7,6 @@ const signup = async (req, res) => {
 
     try {
         let { fullName, email, password } = req.body
-        console.log(fullName, email, password)
         if (!email || !password || !fullName) return res.status(400).json({ message: 'All fields are required' })
 
         if (password.length < 6) return res.status(400).json({ message: "Password must be atleast 6 characters" })
@@ -48,7 +47,6 @@ const login = async (req, res) => {
     try {
         const { email, password } = req.body
         const user = await User.findOne({ email })
-        console.log('user = ', user)
         if (user) {
             const match = bcrypt.compareSync(password, user.password)
             if (match) {
@@ -90,7 +88,6 @@ const updateProfile = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: "Profile pic is required" });
         }
-        console.log('uploading image to cloudinary..')
         let imageUrl = null
         if (req.file) {
             const result = await new Promise((resolve, reject) => {
@@ -102,7 +99,6 @@ const updateProfile = async (req, res) => {
                     .end(req.file.buffer);
             });
 
-            console.log('result after upload ============== ', result)
 
             imageUrl = result;
         }
@@ -111,7 +107,6 @@ const updateProfile = async (req, res) => {
             { profileImage: imageUrl },
             { new: true }
         );
-        console.log('user updated, user = ', updatedUser)
 
         res.status(200).json(updatedUser);
     } catch (error) {
