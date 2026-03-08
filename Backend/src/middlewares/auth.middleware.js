@@ -3,6 +3,7 @@ import User from '../models/user.model.js'
 
 const protectRoute = async(req,res,next) => {
     try {        
+        console.log('req.cookies🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪 = ',req.cookies)
         const token = req.cookies.token;
     
         if(!token)return res.status(400).json({message:"Unauthorized-no token detected"})

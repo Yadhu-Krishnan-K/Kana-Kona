@@ -12,7 +12,7 @@ const generateToken =(userId,res)=>{
         maxAge:1000 * 60 * 60 * 24 * 7, //7days in ms
         httpOnly:true,
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        secure:process.env.NODE_ENV!=="development"
+        secure:process.env.NODE_ENV==="production"
     });
     return token
 }
