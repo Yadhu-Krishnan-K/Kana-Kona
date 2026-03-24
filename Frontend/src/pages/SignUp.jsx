@@ -3,10 +3,11 @@ import { useAuthStore } from '../store/useAuthStore'
 import { MessageSquare, User, Mail, EyeOff, Eye, Lock, Loader2 } from 'lucide-react'
 import { AuthImagePattern } from '../components'
 import toast from 'react-hot-toast'
-import {Link} from 'react-router-dom'
+import {Link, useNavigate} from 'react-router-dom'
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState()
+  const nav = useNavigate()
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -28,11 +29,14 @@ function SignUp() {
     return true;
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault()
     const success = validateForm()
     if(success){
-      signUp(formData)
+      const thing = await signUp(formData)
+      if(thing){
+        nav('/verify-otp')
+      }
     }
   }
 

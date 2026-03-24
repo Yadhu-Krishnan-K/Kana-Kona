@@ -9,6 +9,8 @@ export const useAuthStore = create((set, get) => ({
     authUser: null,
     isSigningUp: false,
     isLoggingIn: false,
+    openOtpPage: false,
+    // authRefEmail: null,
     isUpdatingProfile: false,
 
     isCheckingAuth: true,
@@ -33,14 +35,39 @@ export const useAuthStore = create((set, get) => ({
         try {
             set({ isSigningUp: true })
             const res = await axiosInstance.post('/auth/signup', data)
+            console.log('res🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀 ====',res)
+            localStorage.setItem("otpEmail",data.email)
+            if(res.data.success){
+                set({openOtpPage: true})
+                return true
+            }else{
+                toast.error(res.data.message)
+                return false
+            }
+        } catch (error) {
+            toast.error(error.response.data.message)
+            set({ isSigningUp: false })
+            set({openOtpPage: false})
+            return false
+        } 
+        
+    },
+
+    verifyOtp: async (data) => {
+        try {
+            data.email = localStorage.getItem("otpEmail")
+            const res = await axiosInstance.post('/auth/verifyOtp',data)
             set({ authUser: res.data })
+            localStorage.removeItem("otpEmail")
             get().connectSocket()
             toast.success("Account created successfully")
         } catch (error) {
             toast.error(error.response.data.message)
             set({ isSigningUp: false })
+            set({openOtpPage: false})
         } finally {
-            set({ isSigningUp: false })
+            set({isSigningUp: false})
+            set({openOtpPage: false})
         }
     },
 

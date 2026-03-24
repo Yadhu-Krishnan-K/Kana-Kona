@@ -5,13 +5,19 @@ import {NavBar} from './components'
 import { useAuthStore } from './store/useAuthStore';
 import { useThemeStore } from "./store/useThemeStore";
 import {Toaster} from 'react-hot-toast'
+import VerifyOTP from './pages/VerifyOtp';
+import ForgotPassword from './pages/ForgotPassword';
 function App() {
-  const {authUser, checkAuth, isCheckingAuth} = useAuthStore()
+  const {authUser, checkAuth, isCheckingAuth,openOtpPage} = useAuthStore()
   const {theme} = useThemeStore()
 
   useEffect(()=>{
     checkAuth()
   },[])
+  // useEffect(()=>{
+  //   console.log('openOtpPage🐒🐒🐒🐒🐒🐒🐒🐒🐒🐒 =',openOtpPage)
+  //   console.log('authUser🐵🐵🐵🐵🐵🐵🐵🐵🐵🐵🐵🐵=',authUser)
+  // },[openOtpPage,authUser])
   
   if(!authUser && isCheckingAuth){
     return (<div className='flex items-center justify-center h-screen'>
@@ -29,6 +35,8 @@ function App() {
           <Route path='/login' element={!authUser?<Login/>:<Navigate to={'/home'}/>} />
           <Route path='/profile' element={authUser?<Profile/>:<Navigate to={'/'}/>} />
           <Route path='/settings' element={authUser?<Settings/>:<Navigate to={'/'}/>} />
+          <Route path='/verify-otp' element={!authUser&&openOtpPage?<VerifyOTP/>:<Navigate to={'/home'}/>} />
+          <Route path='/forgot-password' element={!authUser?<ForgotPassword/>:<Navigate to={'/home'}/>} />
         </Routes>
         <Toaster />
     </div>
