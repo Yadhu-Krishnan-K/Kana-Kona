@@ -11,6 +11,10 @@ const otpSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  page:{
+    type: String,//signup | forgotPassword
+    required: true
+  },
   expiresAt: {
     type: Date,
     required: true,

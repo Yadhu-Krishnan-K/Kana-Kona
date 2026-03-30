@@ -1,18 +1,28 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, ArrowLeft, Loader2, KeyRound } from "lucide-react";
-import AuthImagePattern from "../components/AuthImagePattern";
+import AuthImagePattern from "../../components/AuthImagePattern"
+import { useAuthStore } from "../../store/useAuthStore";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const {forgotPassword} = useAuthStore()
+  const navigator = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    // Add your password reset logic here via your AuthStore
-    console.log("Reset requested for:", email);
-    setTimeout(() => setIsSubmitting(false), 2000); // Mock delay
+    // setIsSubmitting(true);
+    // // Add your password reset logic here via your AuthStore
+    // console.log("Reset requested for:", email);
+    // setTimeout(() => setIsSubmitting(false), 2000); // Mock delay
+    if(!email.length) return toast.error("email shouldn't be empty")
+    const result = await forgotPassword(email)
+    if(result){
+      navigator('/reset-password')
+    }
   };
 
   return (

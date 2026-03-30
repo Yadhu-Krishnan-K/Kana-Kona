@@ -6,7 +6,8 @@ import { useAuthStore } from './store/useAuthStore';
 import { useThemeStore } from "./store/useThemeStore";
 import {Toaster} from 'react-hot-toast'
 import VerifyOTP from './pages/VerifyOtp';
-import ForgotPassword from './pages/ForgotPassword';
+import ForgotPassword from './pages/ForgotPassword/ForgotPassword';
+import ResetPassword from './pages/ForgotPassword/ResetPassword';
 function App() {
   const {authUser, checkAuth, isCheckingAuth,openOtpPage} = useAuthStore()
   const {theme} = useThemeStore()
@@ -37,6 +38,7 @@ function App() {
           <Route path='/settings' element={authUser?<Settings/>:<Navigate to={'/'}/>} />
           <Route path='/verify-otp' element={!authUser&&openOtpPage?<VerifyOTP/>:<Navigate to={'/home'}/>} />
           <Route path='/forgot-password' element={!authUser?<ForgotPassword/>:<Navigate to={'/home'}/>} />
+          <Route path='/reset-password' element={!authUser?<ResetPassword/>:<Navigate to={'/home'}/>} />
         </Routes>
         <Toaster />
     </div>

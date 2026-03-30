@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { axiosInstance } from '../lib/axios'
 import toast from 'react-hot-toast'
 import { io } from "socket.io-client";
+import ResetPassword from '../pages/ForgotPassword/ResetPassword';
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL
 
@@ -9,6 +10,7 @@ export const useAuthStore = create((set, get) => ({
     authUser: null,
     isSigningUp: false,
     isLoggingIn: false,
+    isResettingPassword: false,
     openOtpPage: false,
     // authRefEmail: null,
     isUpdatingProfile: false,
@@ -16,6 +18,7 @@ export const useAuthStore = create((set, get) => ({
     isCheckingAuth: true,
     socket: null,
     onlineUsers: [],
+
 
     checkAuth: async () => {
         try {
@@ -31,32 +34,34 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
+
     signUp: async (data) => {
         try {
             set({ isSigningUp: true })
             const res = await axiosInstance.post('/auth/signup', data)
-            console.log('res🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀 ====',res)
-            localStorage.setItem("otpEmail",data.email)
-            if(res.data.success){
-                set({openOtpPage: true})
+            console.log('res🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀 ====', res)
+            localStorage.setItem("otpEmail", data.email)
+            if (res.data.success) {
+                set({ openOtpPage: true })
                 return true
-            }else{
+            } else {
                 toast.error(res.data.message)
                 return false
             }
         } catch (error) {
             toast.error(error.response.data.message)
             set({ isSigningUp: false })
-            set({openOtpPage: false})
+            set({ openOtpPage: false })
             return false
-        } 
-        
+        }
+
     },
+
 
     verifyOtp: async (data) => {
         try {
             data.email = localStorage.getItem("otpEmail")
-            const res = await axiosInstance.post('/auth/verifyOtp',data)
+            const res = await axiosInstance.post('/auth/verifyOtp', data)
             set({ authUser: res.data })
             localStorage.removeItem("otpEmail")
             get().connectSocket()
@@ -64,12 +69,89 @@ export const useAuthStore = create((set, get) => ({
         } catch (error) {
             toast.error(error.response.data.message)
             set({ isSigningUp: false })
-            set({openOtpPage: false})
+            set({ openOtpPage: false })
         } finally {
-            set({isSigningUp: false})
-            set({openOtpPage: false})
+            set({ isSigningUp: false })
+            set({ openOtpPage: false })
         }
     },
+
+
+    login: async (data) => {
+        try {
+            set({ isLoggingIn: true })
+            const res = await axiosInstance.post("/auth/login", data)
+            set({ authUser: res.data })
+            toast.success("Logged in successfully")
+            get().connectSocket()
+        } catch (error) {
+            // if(error.status!==500){
+            console.log('error = ', error)
+                toast.error(error.response.data.message)
+            // }
+        } finally {
+            set({ isLoggingIn: false })
+        }
+    },
+
+    forgotPassoword: async (email) => {
+        try {
+            localStorage.setItem("forgotPasswordEmail",email)
+            const res = await axiosInstance.post("/forgot-password",email)
+            if(res.data.success){
+                set({isResettingPassword: true})
+            }
+            return true
+        } catch (error) {
+            console.log('error = ',error);
+            set({isResettingPassword: false});
+            toast.error(error.response.data.message);
+            return false
+        }
+    },
+
+    
+    resetPassword: async (data) => {
+        try {
+            const email = localStorage.getItem("forgotPasswordEmail")
+            data.email = email
+            const res = await axiosInstance.post("/reset-password",data)
+            if(res.data.success){
+                set({isResettingPassword: false})
+                localStorage.removeItem("forgotPasswordEmail")
+                toast.success(res.data.message)
+            }
+            return true
+        } catch (error) {
+            console.log('error = ',error)
+            toast.error(error.response.data.message)
+            return false
+        }
+    },
+
+
+    updateProfile: async (data) => {
+        try {
+            const formData = new FormData()
+            formData.append("image", data.profilePic)
+            set({ isUpdatingProfile: true })
+            const res = await axiosInstance.patch('/auth/update-profile',
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data"
+                    }
+                }
+            )
+            set({ authUser: res.data })
+            toast.success("Profile Updated Successfully");
+        } catch (error) {
+            toast.error(error.response.data.message)
+        } finally {
+            set({ isUpdatingProfile: false })
+        }
+    },
+
 
     logOut: async () => {
         try {
@@ -82,40 +164,6 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
-    login: async (data) => {
-        try {
-            set({ isLoggingIn: true })
-            const res = await axiosInstance.post("/auth/login", data)
-            set({ authUser: res.data })
-            toast.success("Logged in successfully")
-            get().connectSocket()
-        } catch (error) {
-            // if(error.status!==500){
-            toast.error(error.response.data.message)
-            // }
-        } finally {
-            set({ isLoggingIn: false })
-        }
-    },
-    updateProfile: async (data) => {
-        try {
-            const formData = new FormData()
-            formData.append("image",data.profilePic)
-            set({ isUpdatingProfile: true })
-            const res = await axiosInstance.patch('/auth/update-profile', 
-                formData,
-                {headers:{
-                    "Content-Type":"multipart/form-data"
-                }}
-            )
-            set({ authUser: res.data })
-            toast.success("Profile Updated Successfully");
-        } catch (error) {
-            toast.error(error.response.data.message)
-        } finally {
-            set({ isUpdatingProfile: false })
-        }
-    },
 
     connectSocket: () => {
         try {
@@ -134,13 +182,15 @@ export const useAuthStore = create((set, get) => ({
                 set({ onlineUsers: userIds })
             })
         } catch (error) {
-            console.log('error: socketconnection error: ',error)
+            console.log('error: socketconnection error: ', error)
         }
 
     },
 
+
     disConnectSocket: () => {
         if (get().socket?.connected) get().socket.disconnect();
     }
+
 
 }))

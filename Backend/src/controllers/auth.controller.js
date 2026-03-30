@@ -43,12 +43,13 @@ const signup = async (req, res) => {
         const genOtp = generateOtp();
 
         // remove old OTP if exists
-        await Otp.deleteMany({ email });
+        await Otp.deleteMany({ email, page:'signup' });
 
         // save new OTP
         await Otp.create({
             email,
-            otp:genOtp,
+            otp: genOtp,
+            page: 'signup',
             expiresAt: new Date(Date.now() + 5 * 60 * 1000)
         });
 
@@ -58,19 +59,6 @@ const signup = async (req, res) => {
             to: email,
             from: process.env.EMAIL
         })
-
-        // if (newUser) {
-        //     generateToken(newUser._id, res)
-        //     await newUser.save()
-        //     res.status(201).json({
-        //         _id: newUser._id,
-        //         email: newUser.email,
-        //         userName: newUser.name,
-        //         profilePic: newUser.profileImage
-        //     })
-        // } else {
-        //     res.status(400).json({ message: "Invalid user data" })
-        // }
         res.status(200).json({ success: true, message: "Otp sent" })
 
     } catch (error) {
@@ -84,7 +72,7 @@ const verifyOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
 
-        const record = await Otp.findOne({ email });
+        const record = await Otp.findOne({ email, page: 'signup' });
 
         if (!record || record.otp !== otp) {
             return res.status(400).json({ message: "Invalid OTP" });
@@ -101,7 +89,7 @@ const verifyOtp = async (req, res) => {
         await user.save();
 
         // cleanup OTP manually (optional but good)
-        await Otp.deleteMany({ email });
+        await Otp.deleteMany({ email, page: "signup" });
 
         generateToken(user._id, res);
 
@@ -158,6 +146,7 @@ const resendOtp = async (req, res) => {
 };
 
 
+
 const login = async (req, res) => {
     try {
         const { email, password } = req.body
@@ -193,6 +182,62 @@ const logout = (req, res) => {
         res.status(400).json({
             message: "Internal server error"
         })
+    }
+}
+
+const forgotPasswordEmailVerification = async (req, res, next) => {
+    try {
+        const email = req.body;
+        const existingUser = await User.findOne({ email })
+        if (!existingUser) {
+            return next(new Error('Invalid Email'))
+        }
+
+        const genOtp = generateOtp();
+
+        // remove old OTP if exists
+        await Otp.deleteMany({ email, page:'forgotPassword' });
+
+        // save new OTP
+        await Otp.create({
+            email,
+            otp: genOtp,
+            page: 'forgotPassword',
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+        });
+
+        await sendEmail({
+            subject: "Verification for KANA-KONA",
+            text: `Your otp to change password : ${genOtp}`,
+            to: email,
+            from: process.env.EMAIL
+        })
+
+        res.status(200).json({ success: true, message: "Otp sent" })
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+const verifyOtpAndUpdatePassword = async (req, res, next) => {
+    try {
+        const {email, otp, newPassword} = req.body;
+
+        const record = await Otp.findOne({email, page:"forgotPassword"})
+        if(record.otp!==otp) return next(new Error("Invalid OTP"))
+        if (record.expiresAt < Date.now()) {
+            next(new Error("Otp expired please resend your email"));
+        }
+        const hash = bcrypt.hashSync(newPassword, salt)
+        const result = await User.updateOne({email},{$set:{password: hash}})
+        
+        await Otp.deleteMany({email, page: "forgotPassword"})
+
+        return res.status(200).json({success:true, message:"Password updated successfully"})
+
+    } catch (error) {
+        next(error)
     }
 }
 
@@ -247,6 +292,8 @@ export {
     verifyOtp,
     resendOtp,
     login,
+    forgotPasswordEmailVerification,
+    verifyOtpAndUpdatePassword,
     logout,
     updateProfile,
     checkAuth
