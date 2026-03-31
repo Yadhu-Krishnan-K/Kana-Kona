@@ -14,15 +14,17 @@ const ForgotPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     // setIsSubmitting(true);
     // // Add your password reset logic here via your AuthStore
-    // console.log("Reset requested for:", email);
+    console.log("Reset requested for:", email);
     // setTimeout(() => setIsSubmitting(false), 2000); // Mock delay
     if(!email.length) return toast.error("email shouldn't be empty")
     const result = await forgotPassword(email)
     if(result){
       navigator('/reset-password')
     }
+    setIsSubmitting(false)
   };
 
   return (

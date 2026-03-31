@@ -27,11 +27,13 @@ const ResetPassword = () => {
     // Add your verification logic here via your AuthStore
     const result = await resetPassword({
         otp:formData.otp,
-        password: formData
+        password: formData.password
     })
     if(result){
-        navigate('/')
+        navigate('/login')
         toast.success("Password updated successfully")
+    }else{
+      setIsSubmitting(false)
     }
   };
 

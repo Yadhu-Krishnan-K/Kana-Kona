@@ -84,20 +84,23 @@ export const useAuthStore = create((set, get) => ({
             set({ authUser: res.data })
             toast.success("Logged in successfully")
             get().connectSocket()
+            return true;
         } catch (error) {
             // if(error.status!==500){
             console.log('error = ', error)
-                toast.error(error.response.data.message)
+            toast.error(error.response.data.message)
+            return false
             // }
         } finally {
             set({ isLoggingIn: false })
         }
     },
 
-    forgotPassoword: async (email) => {
+    forgotPassword: async (email) => {
         try {
+            console.log('going ot setn')
             localStorage.setItem("forgotPasswordEmail",email)
-            const res = await axiosInstance.post("/forgot-password",email)
+            const res = await axiosInstance.post("/auth/forgot-password",{email})
             if(res.data.success){
                 set({isResettingPassword: true})
             }
@@ -115,7 +118,7 @@ export const useAuthStore = create((set, get) => ({
         try {
             const email = localStorage.getItem("forgotPasswordEmail")
             data.email = email
-            const res = await axiosInstance.post("/reset-password",data)
+            const res = await axiosInstance.patch("/auth/reset-password",data)
             if(res.data.success){
                 set({isResettingPassword: false})
                 localStorage.removeItem("forgotPasswordEmail")
