@@ -40,7 +40,8 @@ const createTransporter = async () => {
         return transporter
         
     } catch (error) {
-        console.log("createTransporter Error: ",error)
+        console.log('error creating transporter: ')
+        throw new Error(error)
     }
 }
 
@@ -50,7 +51,8 @@ export const sendEmail = async(emailOpts) => {
         await emailTransporter.sendMail(emailOpts);
         
     } catch (error) {
-        console.log('sendEmail error: ',error)
+        console.log('sendEmail error: ')
+        throw new Error(error)
     }
 }
 
