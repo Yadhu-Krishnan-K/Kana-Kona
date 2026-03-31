@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import AuthImagePattern from "../components/AuthImagePattern";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare } from "lucide-react";
 
 const Login = () => {
@@ -10,11 +10,15 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const navigator = useNavigate()
   const { login, isLoggingIn } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    login(formData);
+    const result = login(formData);
+    if(result){
+      navigator('/home')
+    }
   };
 
   return (
@@ -105,6 +109,14 @@ const Login = () => {
               </Link>
             </p>
 
+          </div>
+         
+          <div className="text-center">
+              <p className="text-base-content/60">
+                <Link to='/forgot-password' className="link">
+                  Forgot Password
+                </Link>
+              </p>
           </div>
         </div>
       </div>
