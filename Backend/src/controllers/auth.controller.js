@@ -19,8 +19,11 @@ const signup = async (req, res) => {
 
         if (password.length < 6) return res.status(400).json({ message: "Password must be atleast 6 characters" })
 
-        const existingUser = await User.findOne({ email })
-        if (existingUser && existingUser.isVerified) return res.status(400).json({ message: 'Email already registered' })
+        const existingUser = await User.findOne({$or: [
+            {email},
+            {name: fullName}
+        ]})
+        if (existingUser && existingUser.isVerified) return res.status(400).json({ message: 'User with same name or email already registered' })
 
         const salt = bcrypt.genSaltSync(10)
         const hash = bcrypt.hashSync(password, salt)
@@ -187,7 +190,8 @@ const logout = (req, res) => {
 
 const forgotPasswordEmailVerification = async (req, res, next) => {
     try {
-        const email = req.body;
+        console.log('test hit ....')
+        const {email} = req.body;
         const existingUser = await User.findOne({ email })
         if (!existingUser) {
             return next(new Error('Invalid Email'))
@@ -222,14 +226,16 @@ const forgotPasswordEmailVerification = async (req, res, next) => {
 
 const verifyOtpAndUpdatePassword = async (req, res, next) => {
     try {
-        const {email, otp, newPassword} = req.body;
+        console.log("body = ",req.body)
+        const {email, otp, password} = req.body;
 
         const record = await Otp.findOne({email, page:"forgotPassword"})
         if(record.otp!==otp) return next(new Error("Invalid OTP"))
         if (record.expiresAt < Date.now()) {
             next(new Error("Otp expired please resend your email"));
         }
-        const hash = bcrypt.hashSync(newPassword, salt)
+        const salt = bcrypt.genSaltSync(10)
+        const hash = bcrypt.hashSync(password, salt)
         const result = await User.updateOne({email},{$set:{password: hash}})
         
         await Otp.deleteMany({email, page: "forgotPassword"})
