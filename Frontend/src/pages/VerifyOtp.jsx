@@ -5,7 +5,7 @@ import AuthImagePattern from "../components/AuthImagePattern";
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(new Array(6).fill(""));
-  const {verifyOtp} = useAuthStore()
+  const {verifyOtp, resendOtp, isResentingOtp} = useAuthStore()
   const [isVerifying, setIsVerifying] = useState(false);
   const inputRefs = useRef([]);
 
@@ -72,8 +72,11 @@ const VerifyOTP = () => {
           <div className="text-center space-y-4">
             <p className="text-base-content/60 text-sm">
               Didn't receive the code?{" "}
-              <button className="link link-primary font-medium flex items-center gap-2 mx-auto mt-2">
-                <RefreshCw className="size-4" /> Resend Code
+              <button className="link link-primary font-medium flex items-center gap-2 mx-auto mt-2" disabled={isResentingOtp} onClick={(e)=>{
+                e.preventDefault();
+                resendOtp()
+              }}>
+                <RefreshCw className={`size-4 ${isResentingOtp && 'animate-spin'}`} /> Resend Code
               </button>
             </p>
           </div>

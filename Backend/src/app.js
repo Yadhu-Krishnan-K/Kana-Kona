@@ -10,7 +10,6 @@ import connectDB from './lib/db.js'
 import authRoutes from './routes/auth.route.js'
 import messageRoutes from './routes/message.route.js'
 import { app, server } from "./lib/socket.io.js";
-import limiter from './middlewares/rate_limit.js'
 import errorHandler from './middlewares/errorHandler.js'
 
 config()
@@ -25,7 +24,7 @@ app.use(cors({
 }))
  
 //@main routes
-app.use("/api/auth",limiter,authRoutes)
+app.use("/api/auth",authRoutes)
 app.use("/api/messages",messageRoutes)
 
 //@global error handler

@@ -5,9 +5,12 @@ const limiter = rateLimit({
   max: 10,
 
   handler: (req, res, next) => {
-    const error = new Error("Too many requests, please try again later.");
-    error.statusCode = 429;
-    next(error); 
+    const enabledRateLimit = false
+    if(enabledRateLimit){
+      const error = new Error("Too many requests, please try again later.");
+      error.statusCode = 429;
+      next(error); 
+    }
   },
 });
 
