@@ -19,10 +19,12 @@ const signup = async (req, res) => {
 
         if (password.length < 6) return res.status(400).json({ message: "Password must be atleast 6 characters" })
 
-        const existingUser = await User.findOne({$or: [
-            {email},
-            {name: fullName}
-        ]})
+        const existingUser = await User.findOne({
+            $or: [
+                { email },
+                { name: fullName }
+            ]
+        })
         if (existingUser && existingUser.isVerified) return res.status(400).json({ message: 'User with same name or email already registered' })
 
         const salt = bcrypt.genSaltSync(10)
@@ -46,7 +48,7 @@ const signup = async (req, res) => {
         const genOtp = generateOtp();
 
         // remove old OTP if exists
-        await Otp.deleteMany({ email, page:'signup' });
+        await Otp.deleteMany({ email, page: 'signup' });
 
         // save new OTP
         await Otp.create({
@@ -74,8 +76,10 @@ const signup = async (req, res) => {
 const verifyOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
-
+        console.log('otp======', otp)
+        console.log('email====', email)
         const record = await Otp.findOne({ email, page: 'signup' });
+        console.log("record========", record)
 
         if (!record || record.otp !== otp) {
             return res.status(400).json({ message: "Invalid OTP" });
@@ -86,10 +90,17 @@ const verifyOtp = async (req, res) => {
             return res.status(400).json({ message: "OTP expired" });
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOneAndUpdate(
+            { email: email },
+            { $set: { isVerified: true } },
+            { new: true }
+        );
 
-        user.isVerified = true;
-        await user.save();
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        console.log('updated user = ', user)
 
         // cleanup OTP manually (optional but good)
         await Otp.deleteMany({ email, page: "signup" });
@@ -130,8 +141,12 @@ const resendOtp = async (req, res) => {
         await Otp.create({
             email,
             otp,
+            page: 'signup',
             expiresAt: new Date(Date.now() + 5 * 60 * 1000)
         });
+
+        console.log('your otp is sending.......');
+        
 
         await sendEmail({
             subject: "Resend OTP",
@@ -140,7 +155,7 @@ const resendOtp = async (req, res) => {
             from: process.env.EMAIL
         });
 
-        res.status(200).json({ message: "OTP resent" });
+        res.status(200).json({ success: true, message: "OTP resent" });
 
     } catch (error) {
         console.error(error);
@@ -154,15 +169,19 @@ const login = async (req, res) => {
     try {
         const { email, password } = req.body
         const user = await User.findOne({ email })
+        if (!user.isVerified) return res.status(400).json({ success: false, message: "Complete the signup procedures..." })
         if (user) {
             const match = bcrypt.compareSync(password, user.password)
             if (match) {
                 generateToken(user._id, res)
                 res.status(200).json({
-                    _id: user._id,
-                    email: user.email,
-                    userName: user.name,
-                    profilePic: user.profileImage
+                    success: true,
+                    authUser: {
+                        _id: user._id,
+                        email: user.email,
+                        userName: user.name,
+                        profilePic: user.profileImage
+                    }
                 })
             } else {
                 res.status(400).json({ message: "invalid password" })
@@ -191,7 +210,7 @@ const logout = (req, res) => {
 const forgotPasswordEmailVerification = async (req, res, next) => {
     try {
         console.log('test hit ....')
-        const {email} = req.body;
+        const { email } = req.body;
         const existingUser = await User.findOne({ email })
         if (!existingUser) {
             return next(new Error('Invalid Email'))
@@ -200,7 +219,7 @@ const forgotPasswordEmailVerification = async (req, res, next) => {
         const genOtp = generateOtp();
 
         // remove old OTP if exists
-        await Otp.deleteMany({ email, page:'forgotPassword' });
+        await Otp.deleteMany({ email, page: 'forgotPassword' });
 
         // save new OTP
         await Otp.create({
@@ -226,21 +245,21 @@ const forgotPasswordEmailVerification = async (req, res, next) => {
 
 const verifyOtpAndUpdatePassword = async (req, res, next) => {
     try {
-        console.log("body = ",req.body)
-        const {email, otp, password} = req.body;
+        console.log("body = ", req.body)
+        const { email, otp, password } = req.body;
 
-        const record = await Otp.findOne({email, page:"forgotPassword"})
-        if(record.otp!==otp) return next(new Error("Invalid OTP"))
+        const record = await Otp.findOne({ email, page: "forgotPassword" })
+        if (record.otp !== otp) return next(new Error("Invalid OTP"))
         if (record.expiresAt < Date.now()) {
             next(new Error("Otp expired please resend your email"));
         }
         const salt = bcrypt.genSaltSync(10)
         const hash = bcrypt.hashSync(password, salt)
-        const result = await User.updateOne({email},{$set:{password: hash}})
-        
-        await Otp.deleteMany({email, page: "forgotPassword"})
+        const result = await User.updateOne({ email }, { $set: { password: hash } })
 
-        return res.status(200).json({success:true, message:"Password updated successfully"})
+        await Otp.deleteMany({ email, page: "forgotPassword" })
+
+        return res.status(200).json({ success: true, message: "Password updated successfully" })
 
     } catch (error) {
         next(error)
@@ -283,8 +302,8 @@ const updateProfile = async (req, res) => {
 
 const checkAuth = async (req, res) => {
     try {
-        if (!req.user) return res.status(401).json({ message: "Unauthorized" })
-        res.status(200).json(req.user);
+        if (!req.user) return res.status(401).json({ success: false, message: "Unauthorized" })
+        res.status(200).json({ success: true, user: req.user });
 
     } catch (error) {
         console.error(error)

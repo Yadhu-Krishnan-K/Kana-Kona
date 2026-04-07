@@ -8,7 +8,10 @@ import { getReceiverSocketIds, io } from '../lib/socket.io.js'
 const getUsersSidbar = async (req, res) => {
     try {
         let current_userId = req.user._id
-        let list = await User.find({ _id: { $ne: current_userId } }).select("-password")
+        let list = await User.find({ 
+            _id: { $ne: current_userId },
+            isVerified: true,
+         }).select("-password")
         res.status(200).json(list)
     } catch (error) {
         console.error(error)

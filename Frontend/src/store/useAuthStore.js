@@ -11,6 +11,8 @@ export const useAuthStore = create((set, get) => ({
     isSigningUp: false,
     isLoggingIn: false,
     isResettingPassword: false,
+    hasCheckAuth: false,
+    isResentingOtp: false,
     openOtpPage: false,
     // authRefEmail: null,
     isUpdatingProfile: false,
@@ -22,15 +24,26 @@ export const useAuthStore = create((set, get) => ({
 
     checkAuth: async () => {
         try {
+            console.log('running....')
             const res = await axiosInstance.get('/auth/check')
-            set({ authUser: res.data })
+
+            set({ authUser: res.data.user })
             get().connectSocket()
         } catch (error) {
-            console.error('error == ', error)
-            set({ authUser: null })
-            toast.error(error.response.data.message)
+            const { hasCheckAuth } = get();
+            if (error.response?.status == 401) {
+                if (!hasCheckAuth) {
+                    set({ authUser: null })
+                    return;
+                }
+                toast.error("Session expired. Please login again.");
+            } else {
+                toast.error(error.response?.data?.message || "Something went wrong");
+            }
+
         } finally {
             set({ isCheckingAuth: false })
+            set({ hasCheckAuth: true })
         }
     },
 
@@ -49,6 +62,7 @@ export const useAuthStore = create((set, get) => ({
                 return false
             }
         } catch (error) {
+            console.log('error when signing up 😭  😭  😭  😭  😭  😭  😭  😭  😭  😭  😭  😭 ', error)
             toast.error(error.response.data.message)
             set({ isSigningUp: false })
             set({ openOtpPage: false })
@@ -73,6 +87,28 @@ export const useAuthStore = create((set, get) => ({
         } finally {
             set({ isSigningUp: false })
             set({ openOtpPage: false })
+            set({isResentingOtp: false})
+        }
+    },
+
+
+    resendOtp: async () => {
+        try {
+            const data = {}
+            data.email = localStorage.getItem("otpEmail")
+            set({isResentingOtp: true})
+            const res = await axiosInstance.post('/auth/resend-otp', data)
+            if(res.data.success){
+                toast.success("resended otp")
+            }
+            // set({ authUser: res.data })
+            // localStorage.removeItem("otpEmail")
+            // get().connectSocket()
+        } catch (error) {
+            toast.error(error.response.data.message)
+            set({isResentingOtp: false})
+            // set({ isSigningUp: false })
+            // set({ openOtpPage: false })
         }
     },
 
@@ -81,7 +117,12 @@ export const useAuthStore = create((set, get) => ({
         try {
             set({ isLoggingIn: true })
             const res = await axiosInstance.post("/auth/login", data)
-            set({ authUser: res.data })
+            console.log('res.....ponse..... === ', res)
+            if (!res.data.success) {
+                toast.error(res.data.message || "something went wrong...")
+                return false;
+            }
+            set({ authUser: res.data.authUser })
             toast.success("Logged in successfully")
             get().connectSocket()
             return true;
@@ -99,34 +140,34 @@ export const useAuthStore = create((set, get) => ({
     forgotPassword: async (email) => {
         try {
             console.log('going ot setn')
-            localStorage.setItem("forgotPasswordEmail",email)
-            const res = await axiosInstance.post("/auth/forgot-password",{email})
-            if(res.data.success){
-                set({isResettingPassword: true})
+            localStorage.setItem("forgotPasswordEmail", email)
+            const res = await axiosInstance.post("/auth/forgot-password", { email })
+            if (res.data.success) {
+                set({ isResettingPassword: true })
             }
             return true
         } catch (error) {
-            console.log('error = ',error);
-            set({isResettingPassword: false});
+            console.log('error = ', error);
+            set({ isResettingPassword: false });
             toast.error(error.response.data.message);
             return false
         }
     },
 
-    
+
     resetPassword: async (data) => {
         try {
             const email = localStorage.getItem("forgotPasswordEmail")
             data.email = email
-            const res = await axiosInstance.patch("/auth/reset-password",data)
-            if(res.data.success){
-                set({isResettingPassword: false})
+            const res = await axiosInstance.patch("/auth/reset-password", data)
+            if (res.data.success) {
+                set({ isResettingPassword: false })
                 localStorage.removeItem("forgotPasswordEmail")
                 toast.success(res.data.message)
             }
             return true
         } catch (error) {
-            console.log('error = ',error)
+            console.log('error = ', error)
             toast.error(error.response.data.message)
             return false
         }

@@ -9,6 +9,7 @@ import VerifyOTP from './pages/VerifyOtp';
 import ForgotPassword from './pages/ForgotPassword/ForgotPassword';
 import ResetPassword from './pages/ForgotPassword/ResetPassword';
 function App() {
+
   const {authUser, checkAuth, isCheckingAuth,openOtpPage} = useAuthStore()
   const {theme} = useThemeStore()
 
@@ -20,7 +21,7 @@ function App() {
   //   console.log('authUser🐵🐵🐵🐵🐵🐵🐵🐵🐵🐵🐵🐵=',authUser)
   // },[openOtpPage,authUser])
   
-  if(!authUser && isCheckingAuth){
+  if(isCheckingAuth){
     return (<div className='flex items-center justify-center h-screen'>
       <span className="loading loading-infinity loading-lg"></span>
     </div>)
