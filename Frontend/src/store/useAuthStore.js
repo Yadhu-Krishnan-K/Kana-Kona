@@ -53,9 +53,11 @@ export const useAuthStore = create((set, get) => ({
             set({ isSigningUp: true })
             const res = await axiosInstance.post('/auth/signup', data)
             console.log('res🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀 ====', res)
-            localStorage.setItem("otpEmail", data.email)
+            toast.success(`Enter otp: ${res.data.otp}`,{autoClose: 10000})
+            localStorage.setItem("name", data.fullName)
             if (res.data.success) {
                 set({ openOtpPage: true })
+                console.log('otp=====',res.data.otp)
                 return true
             } else {
                 toast.error(res.data.message)
@@ -74,10 +76,10 @@ export const useAuthStore = create((set, get) => ({
 
     verifyOtp: async (data) => {
         try {
-            data.email = localStorage.getItem("otpEmail")
+            data.name = localStorage.getItem("name")
             const res = await axiosInstance.post('/auth/verifyOtp', data)
             set({ authUser: res.data })
-            localStorage.removeItem("otpEmail")
+            localStorage.removeItem("name")
             get().connectSocket()
             toast.success("Account created successfully")
         } catch (error) {
@@ -95,11 +97,11 @@ export const useAuthStore = create((set, get) => ({
     resendOtp: async () => {
         try {
             const data = {}
-            data.email = localStorage.getItem("otpEmail")
+            data.name = localStorage.getItem("name")
             set({isResentingOtp: true})
             const res = await axiosInstance.post('/auth/resend-otp', data)
             if(res.data.success){
-                toast.success("resended otp")
+                toast.success(`resended otp = ${res.data.otp}`,{autoClose: 10000})
             }
             // set({ authUser: res.data })
             // localStorage.removeItem("otpEmail")
@@ -137,41 +139,41 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
-    forgotPassword: async (email) => {
-        try {
-            console.log('going ot setn')
-            localStorage.setItem("forgotPasswordEmail", email)
-            const res = await axiosInstance.post("/auth/forgot-password", { email })
-            if (res.data.success) {
-                set({ isResettingPassword: true })
-            }
-            return true
-        } catch (error) {
-            console.log('error = ', error);
-            set({ isResettingPassword: false });
-            toast.error(error.response.data.message);
-            return false
-        }
-    },
+    // forgotPassword: async (email) => {
+    //     try {
+    //         console.log('going ot setn')
+    //         localStorage.setItem("forgotPasswordEmail", email)
+    //         const res = await axiosInstance.post("/auth/forgot-password", { email })
+    //         if (res.data.success) {
+    //             set({ isResettingPassword: true })
+    //         }
+    //         return true
+    //     } catch (error) {
+    //         console.log('error = ', error);
+    //         set({ isResettingPassword: false });
+    //         toast.error(error.response.data.message);
+    //         return false
+    //     }
+    // },
 
 
-    resetPassword: async (data) => {
-        try {
-            const email = localStorage.getItem("forgotPasswordEmail")
-            data.email = email
-            const res = await axiosInstance.patch("/auth/reset-password", data)
-            if (res.data.success) {
-                set({ isResettingPassword: false })
-                localStorage.removeItem("forgotPasswordEmail")
-                toast.success(res.data.message)
-            }
-            return true
-        } catch (error) {
-            console.log('error = ', error)
-            toast.error(error.response.data.message)
-            return false
-        }
-    },
+    // resetPassword: async (data) => {
+    //     try {
+    //         const email = localStorage.getItem("forgotPasswordEmail")
+    //         data.email = email
+    //         const res = await axiosInstance.patch("/auth/reset-password", data)
+    //         if (res.data.success) {
+    //             set({ isResettingPassword: false })
+    //             localStorage.removeItem("forgotPasswordEmail")
+    //             toast.success(res.data.message)
+    //         }
+    //         return true
+    //     } catch (error) {
+    //         console.log('error = ', error)
+    //         toast.error(error.response.data.message)
+    //         return false
+    //     }
+    // },
 
 
     updateProfile: async (data) => {

@@ -16,6 +16,7 @@ config()
 
 const port = process.env.PORT || 8000
 const _dirname = path.resolve();
+app.set("trust proxy", 1)
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
