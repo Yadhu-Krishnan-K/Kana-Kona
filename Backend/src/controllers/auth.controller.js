@@ -2,28 +2,20 @@ import User from '../models/user.model.js'
 import generateToken from '../lib/utils.js'
 import bcrypt from 'bcryptjs'
 import cloudinary from '../lib/cloudinary.js'
-import { sendEmail } from '../lib/createTransporter.js'
+// import { sendEmail } from '../lib/sendEmail.js'
 import { generateOtp } from '../lib/otpGenerator.js'
 import Otp from '../models/otp.model.js'
+// import { success } from 'zod'
 
 
-const signup = async (req, res) => {
+const signup = async (req, res, next) => {
 
     try {
-        let { fullName, email, password } = req.body
-        if (!email || !password || !fullName) return res.status(400).json({ message: 'All fields are required' })
-
-        if (!email || !password || !fullName) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        if (password.length < 6) return res.status(400).json({ message: "Password must be atleast 6 characters" })
+        let { fullName, password } = req.body
+        if (!password || !fullName) return res.status(400).json({ message: 'All fields are required' })
 
         const existingUser = await User.findOne({
-            $or: [
-                { email },
-                { name: fullName }
-            ]
+            name: fullName
         })
         if (existingUser && existingUser.isVerified) return res.status(400).json({ message: 'User with same name or email already registered' })
 
@@ -35,9 +27,8 @@ const signup = async (req, res) => {
         if (!existingUser) {
             user = await User.create({
                 name: fullName,
-                email,
                 password: hash,
-                isVerified: false
+                isVerified: false,
             });
         } else {
             user = existingUser;
@@ -48,23 +39,30 @@ const signup = async (req, res) => {
         const genOtp = generateOtp();
 
         // remove old OTP if exists
-        await Otp.deleteMany({ email, page: 'signup' });
+        await Otp.deleteMany({ name:fullName, page: 'signup' });
 
         // save new OTP
         await Otp.create({
-            email,
+            name:fullName,
             otp: genOtp,
             page: 'signup',
             expiresAt: new Date(Date.now() + 5 * 60 * 1000)
         });
 
-        await sendEmail({
-            subject: "Verification for KANA-KONA",
-            text: `Your otp for verification to use KANA-KONA : ${genOtp}`,
-            to: email,
-            from: process.env.EMAIL
-        })
-        res.status(200).json({ success: true, message: "Otp sent" })
+        //cant use any email service without payment. especiallly node mailer doesnt support on render
+
+        // let {data, error} = await sendEmail({
+        //     subject: "Verification for KANA-KONA",
+        //     html: `<strong>Your otp for registering to Kana-Kona : ${genOtp}</strong>`,
+        //     to: email,
+        //     from: "onboarding@resend.dev"
+        // })
+        // console.log(`data = ${data}, \n error = ${error}`)
+        // if(error){
+
+        //     return res.status(500).json({success: false, message: "error sending otp..."})
+        // }
+        res.status(200).json({ success: true, message: "Otp sent", otp:genOtp })
 
     } catch (error) {
         console.error(error)
@@ -75,10 +73,10 @@ const signup = async (req, res) => {
 
 const verifyOtp = async (req, res) => {
     try {
-        const { email, otp } = req.body;
+        const { name, otp } = req.body;
         console.log('otp======', otp)
-        console.log('email====', email)
-        const record = await Otp.findOne({ email, page: 'signup' });
+        console.log('name====', name)
+        const record = await Otp.findOne({ name, page: 'signup' });
         console.log("record========", record)
 
         if (!record || record.otp !== otp) {
@@ -91,7 +89,7 @@ const verifyOtp = async (req, res) => {
         }
 
         const user = await User.findOneAndUpdate(
-            { email: email },
+            { name },
             { $set: { isVerified: true } },
             { new: true }
         );
@@ -103,13 +101,12 @@ const verifyOtp = async (req, res) => {
         console.log('updated user = ', user)
 
         // cleanup OTP manually (optional but good)
-        await Otp.deleteMany({ email, page: "signup" });
+        await Otp.deleteMany({ name, page: "signup" });
 
         generateToken(user._id, res);
 
         res.status(200).json({
             _id: user._id,
-            email: user.email,
             userName: user.name
         });
 
@@ -122,9 +119,9 @@ const verifyOtp = async (req, res) => {
 
 const resendOtp = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { name } = req.body;
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ name });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -136,10 +133,10 @@ const resendOtp = async (req, res) => {
 
         const otp = generateOtp();
 
-        await Otp.deleteMany({ email });
+        await Otp.deleteMany({ name });
 
         await Otp.create({
-            email,
+            name,
             otp,
             page: 'signup',
             expiresAt: new Date(Date.now() + 5 * 60 * 1000)
@@ -148,14 +145,19 @@ const resendOtp = async (req, res) => {
         console.log('your otp is sending.......');
         
 
-        await sendEmail({
-            subject: "Resend OTP",
-            text: `Your OTP: ${otp}`,
-            to: email,
-            from: process.env.EMAIL
-        });
+        // let {data, error} = await sendEmail({
+        //     subject: "Resend OTP",
+        //     html: `<strong>Your otp for registering to Kana-Kona : ${otp}</strong>`,
+        //     to: email,
+        //     from: "onboarding@resend.dev"
+        // });
+        // console.log(`data = ${data}, \n error = ${error}`)
+        // if(error){
 
-        res.status(200).json({ success: true, message: "OTP resent" });
+        //    return res.status(500).json({success: false, message: "error sending otp..."})
+        // }
+
+        res.status(200).json({ success: true, message: "OTP resent", otp });
 
     } catch (error) {
         console.error(error);
@@ -167,8 +169,9 @@ const resendOtp = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body
-        const user = await User.findOne({ email })
+        const { name, password } = req.body
+        const user = await User.findOne({ name })
+        if(!user)return res.status(404).json({success: false, message:"User not found"})
         if (!user.isVerified) return res.status(400).json({ success: false, message: "Complete the signup procedures..." })
         if (user) {
             const match = bcrypt.compareSync(password, user.password)
@@ -178,7 +181,6 @@ const login = async (req, res) => {
                     success: true,
                     authUser: {
                         _id: user._id,
-                        email: user.email,
                         userName: user.name,
                         profilePic: user.profileImage
                     }
@@ -187,7 +189,7 @@ const login = async (req, res) => {
                 res.status(400).json({ message: "invalid password" })
             }
         } else {
-            res.status(400).json({ message: "invalid email" })
+            res.status(400).json({ message: "invalid user name" })
         }
     } catch (error) {
         console.log(error)
@@ -229,12 +231,17 @@ const forgotPasswordEmailVerification = async (req, res, next) => {
             expiresAt: new Date(Date.now() + 5 * 60 * 1000)
         });
 
-        await sendEmail({
-            subject: "Verification for KANA-KONA",
-            text: `Your otp to change password : ${genOtp}`,
+        let {data, error} = await sendEmail({
+            subject: "For changing password",
+            html: `<Strong>Your otp to change password : ${genOtp}</Strong>`,
             to: email,
-            from: process.env.EMAIL
+            from: "onboarding@resend.dev"
         })
+        console.log(`data = ${data}, \n error = ${error}`)
+        if(error){
+
+         return res.status(500).json({success: false, message: "error sending otp..."})
+        }
 
         res.status(200).json({ success: true, message: "Otp sent" })
 

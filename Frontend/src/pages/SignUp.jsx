@@ -10,7 +10,7 @@ function SignUp() {
   const nav = useNavigate()
   const [formData, setFormData] = useState({
     fullName: "",
-    email: "",
+    // email: "",
     password: ""
   })
 
@@ -21,8 +21,6 @@ function SignUp() {
       toast.error("Full name is required") 
       return false
     }
-    if (!formData.email.trim()){toast.error("Email is required"); return false}
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {toast.error("Invalid email format"); return false}
     if (!formData.password) {toast.error("Password is required");return false}
     if (formData.password.length < 6) { toast.error("Password must be at least 6 characters");return false}
 
@@ -62,7 +60,7 @@ function SignUp() {
           <form onSubmit={handleSubmit} className='space-y-6'>
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium">Full Name</span>
+                <span className="label-text font-medium">User Name/ Nick Name</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -77,7 +75,7 @@ function SignUp() {
                 />
               </div>
             </div>
-            <div className="form-control">
+            {/* <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Email</span>
               </label>
@@ -93,7 +91,7 @@ function SignUp() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
-            </div>
+            </div> */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Password</span>

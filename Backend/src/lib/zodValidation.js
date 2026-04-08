@@ -16,10 +16,10 @@ export const signupSchema = z.object({
       message: "Name can only contain letters and spaces",
     }),
 
-  email: z
-    .string()
-    .trim()
-    .email("Invalid email format"),
+  // email: z
+  //   .string()
+  //   .trim()
+  //   .email("Invalid email format"),
 
   password: z
     .string()
@@ -37,11 +37,10 @@ export const signupSchema = z.object({
 
 
 export const loginSchema = z.object({
-    email: z
+    name: z
         .string()
         .trim()
-        .toLowerCase()
-        .email("Invalid email"),
+        .toLowerCase(),
 
     password: z
         .string()
