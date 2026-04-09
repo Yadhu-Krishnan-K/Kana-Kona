@@ -2,10 +2,11 @@ import { useState, useRef } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { ShieldCheck, Loader2, RefreshCw } from "lucide-react";
 import AuthImagePattern from "../components/AuthImagePattern";
+import toast from "react-hot-toast";
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(new Array(6).fill(""));
-  const {verifyOtp, resendOtp, isResentingOtp} = useAuthStore()
+  const { verifyOtp, resendOtp, isResentingOtp } = useAuthStore()
   const [isVerifying, setIsVerifying] = useState(false);
   const inputRefs = useRef([]);
 
@@ -27,11 +28,17 @@ const VerifyOTP = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsVerifying(true);
-    const finalOtp = otp.join("");
-    console.log("Verifying OTP:", finalOtp);
-    verifyOtp({otp: finalOtp})
+    try {
+      e.preventDefault();
+      setIsVerifying(true);
+      const finalOtp = otp.join("");
+      console.log("Verifying OTP:", finalOtp);
+      await verifyOtp({ otp: finalOtp })
+    } catch (error) {
+      console.log(error)
+    }finally{
+      setIsVerifying(false)
+    }
   };
 
   return (
@@ -72,7 +79,7 @@ const VerifyOTP = () => {
           <div className="text-center space-y-4">
             <p className="text-base-content/60 text-sm">
               Didn't receive the code?{" "}
-              <button className="link link-primary font-medium flex items-center gap-2 mx-auto mt-2" disabled={isResentingOtp} onClick={(e)=>{
+              <button className="link link-primary font-medium flex items-center gap-2 mx-auto mt-2" disabled={isResentingOtp} onClick={(e) => {
                 e.preventDefault();
                 resendOtp()
               }}>
