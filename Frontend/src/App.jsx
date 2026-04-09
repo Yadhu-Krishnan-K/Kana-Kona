@@ -1,52 +1,65 @@
-import React, { useEffect } from 'react'
-import {Routes, Route, Navigate} from 'react-router-dom'
-import { SignUp, Home, Login, Profile, Settings } from './pages';
-import {NavBar} from './components'
-import { useAuthStore } from './store/useAuthStore';
-import { useThemeStore } from "./store/useThemeStore";
-import {Toaster} from 'react-hot-toast'
-import VerifyOTP from './pages/VerifyOtp';
-import NotFound from './pages/NotFound';
-// import ForgotPassword from './pages/ForgotPassword/ForgotPassword';
-// import ResetPassword from './pages/ForgotPassword/ResetPassword';
+import React, { lazy, Suspense, useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useThemeStore } from './store/useThemeStore'
+import { useAuthStore } from './store/useAuthStore'
+import { NavBar } from './components'
+import { Toaster } from 'react-hot-toast'
+
+const SignUp = lazy(() => import('./pages/SignUp'))
+const Home = lazy(() => import('./pages/Home'))
+const Login = lazy(() => import('./pages/Login'))
+const Profile = lazy(() => import('./pages/Profile'))
+const Settings = lazy(() => import('./pages/Settings'))
+const VerifyOTP = lazy(() => import('./pages/VerifyOtp'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'))
+
 function App() {
 
-  const {authUser, checkAuth, isCheckingAuth,openOtpPage} = useAuthStore()
-  const {theme} = useThemeStore()
+  const { authUser, checkAuth, isCheckingAuth, openOtpPage } = useAuthStore()
+  const { theme } = useThemeStore()
 
-  useEffect(()=>{
+  useEffect(() => {
     checkAuth()
-  },[])
-  // useEffect(()=>{
-  //   console.log('openOtpPage🐒🐒🐒🐒🐒🐒🐒🐒🐒🐒 =',openOtpPage)
-  //   console.log('authUser🐵🐵🐵🐵🐵🐵🐵🐵🐵🐵🐵🐵=',authUser)
-  // },[openOtpPage,authUser])
-  
-  if(isCheckingAuth){
+  }, [])
+
+
+  if (isCheckingAuth) {
     return (<div className='flex items-center justify-center h-screen'>
       <span className="loading loading-infinity loading-lg"></span>
     </div>)
   }
 
   return (
-    <>  
-    <div data-theme={theme}>
+    <>
+      <div data-theme={theme}>
         <NavBar />
-        <Routes>
-          <Route path='/' element={!authUser?<SignUp/>:<Navigate to={'/home'}/>} />
-          <Route path='/home' element={authUser?<Home/>:<Navigate to={'/'}/>}  />
-          <Route path='/login' element={!authUser?<Login/>:<Navigate to={'/home'}/>} />
-          <Route path='/profile' element={authUser?<Profile/>:<Navigate to={'/'}/>} />
-          <Route path='/settings' element={authUser?<Settings/>:<Navigate to={'/'}/>} />
-          <Route path='/verify-otp' element={!authUser&&openOtpPage?<VerifyOTP/>:<Navigate to={'/home'}/>} />
-          {/* <Route path='/forgot-password' element={!authUser?<ForgotPassword/>:<Navigate to={'/home'}/>} /> */}
-          {/* <Route path='/reset-password' element={!authUser?<ResetPassword/>:<Navigate to={'/home'}/>} /> */}
+        <Suspense fallback={
+          <div className='flex items-center justify-center h-screen'>
+            <span className="loading loading-infinity loading-lg"></span>
+          </div>
+        }>
+          <Routes>
+            <Route path='/' element={!authUser ? <SignUp /> : <Navigate to={'/home'} />} />
+            <Route path='/login' element={!authUser ? <Login /> : <Navigate to={'/home'} />} />
+            <Route path='/verify-otp' element={!authUser && openOtpPage ? <VerifyOTP /> : <Navigate to={'/home'} />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/home" element={<Home />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
 
 
-          <Route path='*' element={<NotFound />} />
-        </Routes>
+
+            {/* <Route path='/forgot-password' element={!authUser?<ForgotPassword/>:<Navigate to={'/home'}/>} /> */}
+            {/* <Route path='/reset-password' element={!authUser?<ResetPassword/>:<Navigate to={'/home'}/>} /> */}
+
+
+            <Route path='*' element={<NotFound />} />
+          </Routes>
+        </Suspense>
         <Toaster />
-    </div>
+      </div>
     </>
   )
 }
