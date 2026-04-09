@@ -309,8 +309,11 @@ const updateProfile = async (req, res) => {
 
 const checkAuth = async (req, res) => {
     try {
+
+        console.log("✈️✈️✈️✈️✈️✈️✈️✈️");
+        
         if (!req.user) return res.status(401).json({ success: false, message: "Unauthorized" })
-        res.status(200).json({ success: true, user: req.user });
+        return res.status(200).json({ success: true, user: req.user });
 
     } catch (error) {
         console.error(error)

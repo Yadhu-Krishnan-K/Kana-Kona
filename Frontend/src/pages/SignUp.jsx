@@ -28,6 +28,8 @@ function SignUp() {
   }
 
   const handleSubmit = async(e) => {
+    console.log('working ✈️✈️✈️✈️✈️✈️✈️✈️✈️');
+    
     e.preventDefault()
     const success = validateForm()
     if(success){
@@ -72,6 +74,7 @@ function SignUp() {
                   placeholder="John Doe"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  required
                 />
               </div>
             </div>
