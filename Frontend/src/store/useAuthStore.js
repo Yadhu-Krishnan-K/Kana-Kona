@@ -53,7 +53,7 @@ export const useAuthStore = create((set, get) => ({
             set({ isSigningUp: true })
             const res = await axiosInstance.post('/auth/signup', data)
             console.log('res🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀 ====', res)
-            toast.success(`Enter otp: ${res.data.otp}`,{autoClose: 10000})
+            toast.success(`Enter otp: ${res.data.otp}`,{duration: 10000})
             localStorage.setItem("name", data.fullName)
             if (res.data.success) {
                 set({ openOtpPage: true })
@@ -101,7 +101,7 @@ export const useAuthStore = create((set, get) => ({
             set({isResentingOtp: true})
             const res = await axiosInstance.post('/auth/resend-otp', data)
             if(res.data.success){
-                toast.success(`resended otp = ${res.data.otp}`,{autoClose: 10000})
+                toast.success(`resended otp = ${res.data.otp}`,{duration: 10000})
             }
             // set({ authUser: res.data })
             // localStorage.removeItem("otpEmail")
