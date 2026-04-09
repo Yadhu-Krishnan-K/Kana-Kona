@@ -82,14 +82,16 @@ export const useAuthStore = create((set, get) => ({
             localStorage.removeItem("name")
             get().connectSocket()
             toast.success("Account created successfully")
-        } catch (error) {
-            toast.error(error.response.data.message)
-            set({ isSigningUp: false })
-            set({ openOtpPage: false })
-        } finally {
             set({ isSigningUp: false })
             set({ openOtpPage: false })
             set({isResentingOtp: false})
+        } catch (error) {
+            toast.error(error.response.data.message)
+            console.log("error = ",error);
+            if(error.response.status!==400){
+                set({ isSigningUp: false })
+                set({ openOtpPage: false })
+            }
         }
     },
 
@@ -103,6 +105,7 @@ export const useAuthStore = create((set, get) => ({
             if(res.data.success){
                 toast.success(`resended otp = ${res.data.otp}`,{duration: 10000})
             }
+            set({isResentingOtp: false})
             // set({ authUser: res.data })
             // localStorage.removeItem("otpEmail")
             // get().connectSocket()
